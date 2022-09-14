@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <title>PGP Playground</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <!-- <link href="css/style.css" rel="stylesheet"> -->
+        <script src="openpgp.min.js"></script>
+    </head>
+    <body>
+        <div>
+            <label for="pw">Password: </label>
+            <input type="password" name="pw" id="pw" value="">
+        </div>
+        <ul id="file-list">
+            <li><a href="secret.txt.asc">secret.txt.asc</a></li>
+        </ul>
+        <div id="output">
+        </div>
+
+        <script>
+
+        function print(msg) {
+            const elem = document.querySelector("#output")
+            elem.textContent = msg
+        }
+
+        async function loadFileAndDecrypt(url) {
+            const res = await fetch(url)
+            const msg = await res.text()
+            decr(msg)
+        }
+
+
+        async function decr(msg) {
+            const encryptedMessage = await openpgp.readMessage({
+                armoredMessage: msg
+            });
+            try {
+                const { data: decrypted } = await openpgp.decrypt({
+                    message: encryptedMessage,
+                    passwords: [document.querySelector("#pw").value],
+                });
+                print(decrypted);       
+            } catch (e) {
+                print("Could not decrypt file.")
+            }
+        };
+
+        const list = document.querySelectorAll("#file-list > li > a")
+        list.forEach((elem) => {
+            elem.addEventListener("click", (target) => {
+                target.preventDefault()
+                loadFileAndDecrypt(elem.href)
+            })
+        })
+        </script>
+    </body>
+</html>
